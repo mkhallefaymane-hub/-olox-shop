@@ -1,0 +1,239 @@
+I want you to build a complete full-stack Arabic website for my digital subscriptions store called *OLOX SHOP*.
+
+Use this exact tech stack:
+
+- Node.js
+- Express.js
+- EJS for templating
+- PostgreSQL (via pg package)
+- CSS (custom, no Tailwind)
+- JavaScript for frontend interactions
+- File structure organized cleanly
+- Admin dashboard protected with a simple login
+- All pages must be fully responsive
+- RTL (right-to-left) layout and Arabic text everywhere
+- Dark neon theme (purple/blue)
+
+====================================================
+🔥 GENERAL REQUIREMENTS
+====================================================
+
+The website purpose:
+A Moroccan digital store selling subscriptions for:
+- Streaming platforms (Netflix, Shahid, Crunchyroll, Disney+…)
+- Gaming top-up (Free Fire, PUBG, Fortnite…)
+- Music (Spotify, Deezer, Anghami…)
+- Software (Canva Pro, Envato, Freepik, CapCut Teams, Adobe, Figma, Grammarly, QuillBot, Coursera, etc.)
+
+The site must contain:
+
+1) Landing page (index)
+2) Order form (POST /order)
+3) PostgreSQL database connection (save orders)
+4) Admin dashboard (GET /admin)
+5) Admin login (GET /admin/login + session-based access)
+6) Automatic WhatsApp redirection after submitting order
+7) Clean folder structure:
+   /views
+   /views/admin
+   /public/css
+   /public/js
+   db.js
+   index.js
+   package.json
+
+====================================================
+🔥 UI DESIGN REQUIREMENTS
+====================================================
+
+The UI must be:
+- Dark neon theme (#0e0e24 background, neon purple/blue glow)
+- Futuristic / tech-style fonts
+- Neon glowing buttons
+- Box shadows
+- Smooth hover animations
+- Smooth scroll
+- Arabic RTL layout
+
+====================================================
+🔥 CONTENT STRUCTURE
+====================================================
+
+Build ONE single-page homepage containing these sections:
+
+----------------------------------------------------
+1) HERO SECTION
+----------------------------------------------------
+- Title: *"OLOX SHOP — جميع اشتراكاتك في مكان واحد"*
+- Subtitle:
+  "متجر رقمي مغربي يوفر اشتراكات أصلية لجميع التطبيقات، الألعاب، منصات الترفيه وبرامج الذكاء الاصطناعي بأثمنة مناسبة."
+- CTA button 1: "تواصل معنا على واتساب"
+  → opens WhatsApp: https://wa.me/+212716594562
+- CTA button 2: scroll to products
+
+- Animated neon background
+- Centered text
+- Responsive for mobile
+
+----------------------------------------------------
+2) CATEGORY SECTION
+----------------------------------------------------
+Create 4 neon cards:
+
+- *OLOX Media*  
+  "اشتراكات الأفلام والمسلسلات والأنمي."
+
+- *OLOX Play*  
+  "شحن الألعاب والباقات وخدمات الغيمرز."
+
+- *OLOX Music*  
+  "اشتراكات المنصات الموسيقية العالمية."
+
+- *OLOX Tech*  
+  "برامج التصميم والمونتاج والذكاء الاصطناعي."
+
+Each card scrolls to its product category.
+
+----------------------------------------------------
+3) PRODUCTS SECTION
+----------------------------------------------------
+Create a product grid with abstract icons (NOT real copyrighted logos).
+Each product must include:
+- Name
+- Description
+- Placeholder price
+- Button “اطلب الآن”
+
+Organize products by category.
+
+MEDIA:
+Netflix, Disney+, Amazon Prime Video, Crunchyroll, Shahid VIP, OSN+, IPTV, YouTube Premium, Apple TV.
+
+PLAY:
+Free Fire Diamonds, PUBG UC, Mobile Legends Diamonds, Valorant Points, Fortnite V-Bucks, PSN Cards, Xbox Game Pass, Steam Wallet, VPN for gamers, ExitLag.
+
+MUSIC:
+Spotify Premium, Deezer Premium, Anghami Plus, SoundCloud Go+, Apple Music, YouTube Music.
+
+TECH:
+Canva Pro, Envato Elements, Freepik Premium, CapCut Teams, Adobe CC, Grammarly Premium, QuillBot, Figma, Miro, Coursera, SimilarWeb, 1Password, Surfshark, ExpressVPN, CyberGhostVPN.
+
+----------------------------------------------------
+4) ORDER FORM SECTION
+----------------------------------------------------
+A large form with fields:
+
+- Full name (required)
+- Phone number (required)
+- Email (optional)
+- Choose product (dropdown)
+- Subscription duration (1 month, 3 months, 6 months, 12 months)
+- Notes (optional)
+
+When the customer submits:
+
+1) Save the order in PostgreSQL.
+2) Show a “success” page:
+   "تم تسجيل طلبك بنجاح!"
+3) Automatically redirect to WhatsApp after 3 seconds:
+   https://wa.me/+212716594562
+
+----------------------------------------------------
+5) HOW TO ORDER SECTION
+----------------------------------------------------
+Show 4 illustrated steps:
+
+1. اختر المنتج
+2. املأ المعلومات
+3. تواصل مع فريق OLOX عبر الواتساب
+4. يتم تفعيل الاشتراك بسرعة
+
+Include WhatsApp button.
+
+----------------------------------------------------
+6) FAQ SECTION
+----------------------------------------------------
+8 questions:
+- هل الاشتراكات أصلية؟
+- ما طرق الدفع؟
+- كم يستغرق التفعيل؟
+- هل الأسعار ثابتة؟
+- هل يمكنني الإلغاء؟
+- هل يوجد دعم فني؟
+- هل يمكن طلب أكثر من اشتراك؟
+- هل يمكن تغيير الخطة لاحقاً؟
+
+----------------------------------------------------
+7) TESTIMONIALS SECTION
+----------------------------------------------------
+3 placeholder Arabic reviews inside neon glowing cards.
+
+====================================================
+🔥 BACKEND REQUIREMENTS
+====================================================
+
+1) Express server
+2) ENV file support
+3) PostgreSQL connection via pg package
+4) Database table: orders
+
+Columns:
+- id SERIAL PRIMARY KEY
+- fullName TEXT
+- phone TEXT
+- email TEXT
+- productId TEXT
+- productName TEXT
+- duration TEXT
+- notes TEXT
+- createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+5) Route POST /order
+   - Validate input
+   - Insert into database
+   - Render success page and redirect to WhatsApp
+
+6) ADMIN PANEL
+
+Routes:
+
+GET /admin/login  
+→ render login page
+
+POST /admin/login  
+→ set session, redirect to /admin
+
+GET /admin  
+→ display table of orders  
+→ must be protected (redirect to login if not authenticated)
+
+Use simple hardcoded admin credentials:
+username: admin  
+password: admin123
+
+====================================================
+🔥 FILE STRUCTURE REQUIRED
+====================================================
+
+/index.js  
+/db.js  
+/views/layout.ejs  
+/views/index.ejs  
+/views/success.ejs  
+/views/admin/login.ejs  
+/views/admin/dashboard.ejs  
+/public/css/style.css  
+/public/js/main.js  
+.env.example
+
+====================================================
+🔥 FINAL NOTES
+====================================================
+
+- Everything must be written in Arabic RTL.
+- All buttons, forms, texts, must look neon glowing.
+- Make the UI extremely clean and responsive.
+- After finishing, review your own code and fix any errors.
+- If any missing piece appears, generate it automatically.
+
+Build everything completely.
