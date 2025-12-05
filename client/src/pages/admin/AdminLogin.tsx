@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ import {
 } from "@/components/ui/form";
 import { Lock, Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { apiRequest } from "@/lib/queryClient";
 
 const loginSchema = z.object({
   username: z.string().min(1, "اسم المستخدم مطلوب"),
@@ -26,7 +28,6 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function AdminLogin() {
   const [, setLocation] = useLocation();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const form = useForm<LoginFormData>({
@@ -37,23 +38,25 @@ export default function AdminLogin() {
     },
   });
 
-  const onSubmit = async (data: LoginFormData) => {
-    setIsSubmitting(true);
-    setError(null);
-
-    // todo: remove mock functionality - simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Mock authentication - in real app this would call the backend
-    if (data.username === "admin" && data.password === "admin123") {
-      console.log("Login successful");
-      localStorage.setItem("adminLoggedIn", "true");
+  const loginMutation = useMutation({
+    mutationFn: async (data: LoginFormData) => {
+      const response = await apiRequest("POST", "/api/admin/login", data);
+      return response.json();
+    },
+    onSuccess: () => {
       setLocation("/admin");
-    } else {
-      setError("اسم المستخدم أو كلمة المرور غير صحيحة");
-    }
+    },
+    onError: (error: Error) => {
+      const message = error.message.includes("401") 
+        ? "اسم المستخدم أو كلمة المرور غير صحيحة"
+        : "حدث خطأ أثناء تسجيل الدخول";
+      setError(message);
+    },
+  });
 
-    setIsSubmitting(false);
+  const onSubmit = async (data: LoginFormData) => {
+    setError(null);
+    loginMutation.mutate(data);
   };
 
   return (
@@ -124,10 +127,10 @@ export default function AdminLogin() {
               <Button
                 type="submit"
                 className="w-full shadow-[0_0_20px_hsl(var(--neon-purple)/0.3)]"
-                disabled={isSubmitting}
+                disabled={loginMutation.isPending}
                 data-testid="button-admin-login"
               >
-                {isSubmitting ? (
+                {loginMutation.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin ml-2" />
                     جاري تسجيل الدخول...

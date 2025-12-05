@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,8 +22,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { products } from "@/lib/products";
+import { products, getProductById } from "@/lib/products";
 import { CheckCircle2, Loader2 } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 const WHATSAPP_URL = "https://wa.me/+212716594562";
 
@@ -44,9 +47,9 @@ interface OrderFormSectionProps {
 }
 
 export default function OrderFormSection({ selectedProductId, selectedProductName, onClearSelection }: OrderFormSectionProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [countdown, setCountdown] = useState(3);
+  const { toast } = useToast();
 
   const form = useForm<OrderFormData>({
     resolver: zodResolver(orderSchema),
@@ -57,6 +60,33 @@ export default function OrderFormSection({ selectedProductId, selectedProductNam
       productId: selectedProductId || "",
       duration: "",
       notes: "",
+    },
+  });
+
+  const createOrderMutation = useMutation({
+    mutationFn: async (data: OrderFormData) => {
+      const product = getProductById(data.productId);
+      const orderData = {
+        fullName: data.fullName,
+        phone: data.phone,
+        email: data.email || null,
+        productId: data.productId,
+        productName: product?.name || data.productId,
+        duration: data.duration,
+        notes: data.notes || null,
+      };
+      const response = await apiRequest("POST", "/api/orders", orderData);
+      return response.json();
+    },
+    onSuccess: () => {
+      setIsSuccess(true);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "خطأ",
+        description: error.message || "حدث خطأ أثناء إرسال الطلب",
+        variant: "destructive",
+      });
     },
   });
 
@@ -76,14 +106,7 @@ export default function OrderFormSection({ selectedProductId, selectedProductNam
   }, [isSuccess, countdown]);
 
   const onSubmit = async (data: OrderFormData) => {
-    setIsSubmitting(true);
-    
-    // todo: remove mock functionality - simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    console.log("Order submitted:", data);
-    setIsSubmitting(false);
-    setIsSuccess(true);
+    createOrderMutation.mutate(data);
   };
 
   const resetForm = () => {
@@ -278,10 +301,10 @@ export default function OrderFormSection({ selectedProductId, selectedProductNam
                   type="submit"
                   size="lg"
                   className="w-full text-lg py-6 shadow-[0_0_30px_hsl(var(--neon-purple)/0.4)]"
-                  disabled={isSubmitting}
+                  disabled={createOrderMutation.isPending}
                   data-testid="button-submit-order"
                 >
-                  {isSubmitting ? (
+                  {createOrderMutation.isPending ? (
                     <>
                       <Loader2 className="h-5 w-5 animate-spin ml-2" />
                       جاري إرسال الطلب...
