@@ -45,6 +45,7 @@ export async function registerRoutes(
 
   app.post("/api/orders", async (req: Request, res: Response) => {
     try {
+      console.log("🔹 Incoming order body:", req.body); //
       const validatedData = insertOrderSchema.parse(req.body);
       const order = await storage.createOrder(validatedData);
       res.status(201).json(order);
