@@ -1,5 +1,5 @@
 import CategoryCard from "../CategoryCard";
-import { Tv, Gamepad2, Music, Cpu } from "lucide-react";
+import { Tv, Gamepad2, Music, Cpu, Globe } from "lucide-react";
 
 const categories = [
   {
@@ -34,7 +34,11 @@ const categories = [
     id: "custom",
     title: "منتج مخصص",
     description: "اطلب أي اشتراك أو خدمة غير موجودة في المتجر وسنتكلف بالبحث عنها.",
-    icon: Globe, // ولا أي أيقونة أخرى عندك
+    icon: Globe,
+    // نخلي targetId ديال الفورم باش حتى إلا معطيناش onClick
+    // الكارت مازال يقدر يهبط للفورم
+    targetId: "#order-form",
+    gradient: "bg-gradient-to-br from-yellow-400 to-amber-500",
   },
 ];
 
@@ -54,16 +58,19 @@ export default function CategoriesSection() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {categories.map((category) => (
             <CategoryCard
-  key={category.title}
-  {...category}
-  onClick={() => {
-    if (category.title === "منتج مخصص") {
-      document
-        .getElementById("order-form")
-        ?.scrollIntoView({ behavior: "smooth" });
-    }
-  }}
-/>
+              key={category.title}
+              {...category}
+              // ✅ غير "منتج مخصص" لي نعطيه onClick خاص
+              onClick={
+                category.title === "منتج مخصص"
+                  ? () => {
+                      document
+                        .getElementById("order-form")
+                        ?.scrollIntoView({ behavior: "smooth" });
+                    }
+                  : undefined
+              }
+            />
           ))}
         </div>
       </div>
