@@ -320,7 +320,8 @@ export const products: Product[] = [
     icon: Globe,
     iconColor: "bg-yellow-700",
   },
+ ];
   export function getProductsByCategory(category: string) {
   return products.filter((p) => p.category === category);
 }
-];
+
