@@ -1,6 +1,0 @@
-[build]
-builder = "nixpacks"
-buildCommand = "cd client && npm install && npm run build"
-
-[start]
-startCommand = "cd client && npm run preview -- --host 0.0.0.0 --port $PORT"
