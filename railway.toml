@@ -1,19 +1,6 @@
 [build]
 builder = "nixpacks"
-
-[phases.setup]
-# نركّبو Node 18 باش يكون npm متاح
-nixPkgs = ["nodejs_18"]
-
-[phases.install]
-# نمشيو للمجلد client ونركّبو الديبندنسيز
-cmds = ["cd client && npm install"]
-
-[phases.build]
-# نبنيو البروجي من داخل client
-cmds = ["cd client && npm run build"]
+buildCommand = "cd client && npm install && npm run build"
 
 [start]
-# نشغلو Vite preview فوق البورط ديال Railway
-cmd = "cd client && npm run preview -- --host 0.0.0.0 --port $PORT"
-
+startCommand = "cd client && npm run preview -- --host 0.0.0.0 --port $PORT"
