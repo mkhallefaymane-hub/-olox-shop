@@ -30,6 +30,12 @@ const categories = [
     targetId: "#products-tech",
     gradient: "bg-gradient-to-br from-blue-500 to-cyan-600",
   },
+  {
+    id: "custom",
+    title: "منتج مخصص",
+    description: "اطلب أي اشتراك أو خدمة غير موجودة في المتجر وسنتكلف بالبحث عنها.",
+    icon: Globe, // ولا أي أيقونة أخرى عندك
+  },
 ];
 
 export default function CategoriesSection() {
@@ -47,7 +53,17 @@ export default function CategoriesSection() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {categories.map((category) => (
-            <CategoryCard key={category.title} {...category} />
+            <CategoryCard
+  key={category.title}
+  {...category}
+  onClick={() => {
+    if (category.title === "منتج مخصص") {
+      document
+        .getElementById("order-form")
+        ?.scrollIntoView({ behavior: "smooth" });
+    }
+  }}
+/>
           ))}
         </div>
       </div>
