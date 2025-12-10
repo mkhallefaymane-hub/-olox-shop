@@ -16,3 +16,4 @@ cmds = ["cd client && npm run build"]
 [start]
 # نشغلو Vite preview فوق البورط ديال Railway
 cmd = "cd client && npm run preview -- --host 0.0.0.0 --port $PORT"
+
