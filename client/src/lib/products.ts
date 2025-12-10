@@ -318,10 +318,10 @@ export const products: Product[] = [
     price: "ابتداء من 30 د.م",
     category: "tech",
     icon: Globe,
-    iconColor: "bg-yellow-700",
+     iconColor: "bg-yellow-700",
   },
- ];
-  export function getProductsByCategory(category: string) {
+]; // <-- هادي مهمّة بزاف: تسد الآراي هنا
+
+export function getProductsByCategory(category: string) {
   return products.filter((p) => p.category === category);
 }
-
