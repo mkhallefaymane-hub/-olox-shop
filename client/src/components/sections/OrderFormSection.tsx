@@ -27,16 +27,76 @@ import { CheckCircle2, Loader2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
-const WHATSAPP_URL = "https://wa.me/+212716594562";
+// رقم الواتساب ديالك (بلا +)
+const WHATSAPP_NUMBER = "212716594562";
+const WHATSAPP_BASE_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
+const durationLabels: Record<string, string> = {
+  "1month": "شهر واحد",
+  "3months": "3 أشهر",
+  "6months": "6 أشهر",
+  "12months": "12 شهر (سنة)",
+};
+// نبني رسالة الواتساب انطلاقاً من بيانات الطلب
+function buildWhatsappMessage(order: {
+  fullName: string;
+  phone: string;
+  email?: string | null;
+  productName: string;
+  duration: string;
+  notes?: string | null;
+}) {
+  const niceDuration = durationLabels[order.duration] || order.duration;
 
-const orderSchema = z.object({
-  fullName: z.string().min(3, "الاسم يجب أن يكون 3 أحرف على الأقل"),
-  phone: z.string().min(10, "رقم الهاتف غير صالح").regex(/^[0-9+]+$/, "رقم الهاتف يجب أن يحتوي على أرقام فقط"),
-  email: z.string().email("البريد الإلكتروني غير صالح").optional().or(z.literal("")),
-  productId: z.string().min(1, "يرجى اختيار منتج"),
-  duration: z.string().min(1, "يرجى اختيار مدة الاشتراك"),
-  notes: z.string().optional(),
-});
+  const lines = [
+    "👋 السلام عليكم،",
+    "",
+    "📥 توصلنا بطلب جديد من موقع *OLOX SHOP*:",
+    "────────────────────",
+    `👤 الاسم: ${order.fullName}`,
+    `📱 رقم الهاتف: ${order.phone}`,
+    order.email ? `📧 البريد الإلكتروني: ${order.email}` : "",
+    `🛒 المنتج المطلوب: ${order.productName}`,
+    `⏱ مدة الاشتراك: ${niceDuration}`,
+    order.notes ? `📝 ملاحظات إضافية: ${order.notes}` : "",
+    "────────────────────",
+    "✅ شكراً على ثقتك بنا!",
+    "سيتم التواصل معك قريباً لتأكيد الطلب وطريقة الدفع.",
+  ].filter(Boolean);
+
+  return encodeURIComponent(lines.join("\n"));
+}
+
+// سكيمة التحقق
+const orderSchema = z
+  .object({
+    fullName: z.string().min(3, "الاسم يجب أن يكون 3 أحرف على الأقل"),
+    phone: z
+      .string()
+      .min(10, "رقم الهاتف غير صالح")
+      .regex(/^[0-9+]+$/, "رقم الهاتف يجب أن يحتوي على أرقام فقط"),
+    email: z
+      .string()
+      .email("البريد الإلكتروني غير صالح")
+      .optional()
+      .or(z.literal("")),
+    productId: z.string().min(1, "يرجى اختيار منتج"),
+    duration: z.string().min(1, "يرجى اختيار مدة الاشتراك"),
+    notes: z.string().optional(),
+    customProductName: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    // إذا اختار "منتج مخصص" خاصو يكتب الاسم
+    if (data.productId === "custom") {
+      if (!data.customProductName || data.customProductName.trim().length < 3) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["customProductName"],
+          message:
+            "يرجى إدخال اسم المنتج أو الاشتراك المطلوب (3 أحرف على الأقل)",
+        });
+      }
+    }
+  });
 
 type OrderFormData = z.infer<typeof orderSchema>;
 
@@ -46,9 +106,14 @@ interface OrderFormSectionProps {
   onClearSelection?: () => void;
 }
 
-export default function OrderFormSection({ selectedProductId, selectedProductName, onClearSelection }: OrderFormSectionProps) {
+export default function OrderFormSection({
+  selectedProductId,
+  selectedProductName,
+  onClearSelection,
+}: OrderFormSectionProps) {
   const [isSuccess, setIsSuccess] = useState(false);
   const [countdown, setCountdown] = useState(3);
+  const [whatsappUrl, setWhatsappUrl] = useState<string | null>(null);
   const { toast } = useToast();
 
   const form = useForm<OrderFormData>({
@@ -57,68 +122,120 @@ export default function OrderFormSection({ selectedProductId, selectedProductNam
       fullName: "",
       phone: "",
       email: "",
-      productId: selectedProductId || "",
+      productId: selectedProductId || "custom",
       duration: "",
       notes: "",
+      customProductName:
+        selectedProductId === "custom" ? selectedProductName || "" : "",
     },
   });
 
+  const watchProductId = form.watch("productId");
+
   const createOrderMutation = useMutation({
     mutationFn: async (data: OrderFormData) => {
-      const product = getProductById(data.productId);
+      const product =
+        data.productId === "custom" ? null : getProductById(data.productId);
+
+      const productName =
+        data.productId === "custom"
+          ? data.customProductName || "منتج مخصص"
+          : product?.name || data.productId;
+
       const orderData = {
         fullName: data.fullName,
         phone: data.phone,
         email: data.email || null,
         productId: data.productId,
-        productName: product?.name || data.productId,
+        productName,
         duration: data.duration,
         notes: data.notes || null,
       };
+
       const response = await apiRequest("POST", "/api/orders", orderData);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (_response, variables) => {
+      const product =
+        variables.productId === "custom"
+          ? null
+          : getProductById(variables.productId);
+
+      const productName =
+        variables.productId === "custom"
+          ? variables.customProductName || "منتج مخصص"
+          : product?.name || variables.productId;
+
+      const text = buildWhatsappMessage({
+        fullName: variables.fullName,
+        phone: variables.phone,
+        email: variables.email || undefined,
+        productName,
+        duration: variables.duration,
+        notes: variables.notes || undefined,
+      });
+
+      setWhatsappUrl(`${WHATSAPP_BASE_URL}?text=${text}`);
       setIsSuccess(true);
     },
     onError: (error: Error) => {
       toast({
         title: "خطأ",
-        description: error.message || "حدث خطأ أثناء إرسال الطلب",
+        description:
+          error.message || "حدث خطأ أثناء إرسال الطلب. حاول مرة أخرى.",
         variant: "destructive",
       });
     },
   });
 
+  // إذا جا من كارت منتج معيّن
   useEffect(() => {
     if (selectedProductId) {
       form.setValue("productId", selectedProductId);
+      if (selectedProductId === "custom" && selectedProductName) {
+        form.setValue("customProductName", selectedProductName);
+      }
     }
-  }, [selectedProductId, form]);
+  }, [selectedProductId, selectedProductName, form]);
 
+  // العد التنازلي ثم فتح الواتساب
   useEffect(() => {
     if (isSuccess && countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
       return () => clearTimeout(timer);
     } else if (isSuccess && countdown === 0) {
-      window.open(WHATSAPP_URL, "_blank");
+      window.open(whatsappUrl || WHATSAPP_BASE_URL, "_blank");
     }
-  }, [isSuccess, countdown]);
+  }, [isSuccess, countdown, whatsappUrl]);
 
-  const onSubmit = async (data: OrderFormData) => {
+  const onSubmit = (data: OrderFormData) => {
     createOrderMutation.mutate(data);
   };
 
   const resetForm = () => {
     setIsSuccess(false);
     setCountdown(3);
-    form.reset();
+    setWhatsappUrl(null);
+    form.reset({
+      fullName: "",
+      phone: "",
+      email: "",
+      productId: "custom",
+      duration: "",
+      notes: "",
+      customProductName: "",
+    });
     onClearSelection?.();
   };
 
+  const handleOpenWhatsappNow = () => {
+    window.open(whatsappUrl || WHATSAPP_BASE_URL, "_blank");
+  };
+
+  // شاشة النجاح
   if (isSuccess) {
     return (
-      <section id="order-form" className="py-20 relative">
+      <section id="order" className="py-20 relative">
         <div className="container mx-auto px-4 max-w-2xl">
           <Card className="border-[hsl(var(--neon-purple)/0.5)] bg-card/80 backdrop-blur-sm shadow-[0_0_40px_hsl(var(--neon-purple)/0.2)]">
             <CardContent className="p-8 text-center">
@@ -133,13 +250,17 @@ export default function OrderFormSection({ selectedProductId, selectedProductNam
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button
-                  onClick={() => window.open(WHATSAPP_URL, "_blank")}
+                  onClick={handleOpenWhatsappNow}
                   className="bg-green-600 hover:bg-green-700 text-white"
                   data-testid="button-whatsapp-success"
                 >
                   افتح الواتساب الآن
                 </Button>
-                <Button variant="outline" onClick={resetForm} data-testid="button-new-order">
+                <Button
+                  variant="outline"
+                  onClick={resetForm}
+                  data-testid="button-new-order"
+                >
                   طلب جديد
                 </Button>
               </div>
@@ -150,8 +271,9 @@ export default function OrderFormSection({ selectedProductId, selectedProductNam
     );
   }
 
+  // فورم الطلب
   return (
-    <section id="order-from" className="py-20 relative">
+    <section id="order" className="py-20 relative">
       <div className="container mx-auto px-4 max-w-2xl">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
           <span className="bg-gradient-to-l from-[hsl(var(--neon-purple))] to-[hsl(var(--neon-blue))] bg-clip-text text-transparent">
@@ -165,12 +287,17 @@ export default function OrderFormSection({ selectedProductId, selectedProductNam
         <Card className="border-[hsl(var(--neon-purple)/0.5)] bg-card/80 backdrop-blur-sm shadow-[0_0_40px_hsl(var(--neon-purple)/0.2)]">
           <CardHeader>
             <CardTitle className="text-xl">
-              {selectedProductName ? `طلب: ${selectedProductName}` : "نموذج الطلب"}
+              {selectedProductName
+                ? `طلب: ${selectedProductName}`
+                : "نموذج الطلب"}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-5"
+              >
                 <FormField
                   control={form.control}
                   name="fullName"
@@ -229,13 +356,17 @@ export default function OrderFormSection({ selectedProductId, selectedProductNam
                   )}
                 />
 
+                {/* اختيار المنتج */}
                 <FormField
                   control={form.control}
                   name="productId"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>اختر المنتج *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger data-testid="select-product">
                             <SelectValue placeholder="اختر المنتج المطلوب" />
@@ -247,6 +378,9 @@ export default function OrderFormSection({ selectedProductId, selectedProductNam
                               {product.name} - {product.price}
                             </SelectItem>
                           ))}
+                          <SelectItem value="custom">
+                            منتج مخصص (غير موجود في القائمة)
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -254,13 +388,36 @@ export default function OrderFormSection({ selectedProductId, selectedProductNam
                   )}
                 />
 
+                {/* حقل اسم المنتج المخصص */}
+                {watchProductId === "custom" && (
+                  <FormField
+                    control={form.control}
+                    name="customProductName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>اسم المنتج أو الاشتراك المطلوب *</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="مثال: اشتراك منصة معينة لمدة شهر..."
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
                 <FormField
                   control={form.control}
                   name="duration"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>مدة الاشتراك *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger data-testid="select-duration">
                             <SelectValue placeholder="اختر مدة الاشتراك" />
