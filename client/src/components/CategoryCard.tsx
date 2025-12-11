@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import type { LucideIcon } from "lucide-react";
+import { LucideIcon } from "lucide-react";
 
 interface CategoryCardProps {
   title: string;
@@ -7,17 +7,9 @@ interface CategoryCardProps {
   icon: LucideIcon;
   targetId: string;
   gradient: string;
-  onClick?: () => void; // ✅ اختياري
 }
 
-export default function CategoryCard({
-  title,
-  description,
-  icon: Icon,
-  targetId,
-  gradient,
-  onClick,
-}: CategoryCardProps) {
+export default function CategoryCard({ title, description, icon: Icon, targetId, gradient }: CategoryCardProps) {
   const scrollToSection = () => {
     const element = document.querySelector(targetId);
     if (element) {
@@ -25,18 +17,9 @@ export default function CategoryCard({
     }
   };
 
-  // ✅ هادي هي لي غادي نستعملو فـ onClick ديال الكارد
-  const handleClick = () => {
-    if (onClick) {
-      onClick();          // إلا جا onClick من البارِّي نستعملوه
-    } else {
-      scrollToSection();  // وإلا نستعمل السكروول العادي
-    }
-  };
-
   return (
     <Card
-      onClick={handleClick} // ⬅️ مهمّة
+      onClick={scrollToSection}
       className="cursor-pointer group relative overflow-visible border-[hsl(var(--neon-purple)/0.5)] bg-card/50 backdrop-blur-sm transition-all duration-300 hover:border-[hsl(var(--neon-purple))] hover:shadow-[0_0_30px_hsl(var(--neon-purple)/0.3)]"
       data-testid={`card-category-${targetId.replace("#", "")}`}
     >
