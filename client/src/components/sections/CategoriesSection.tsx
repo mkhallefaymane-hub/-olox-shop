@@ -1,79 +1,35 @@
-import CategoryCard from "../CategoryCard";
-import { Tv, Gamepad2, Music, Cpu, Globe } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { LucideIcon } from "lucide-react";
 
-const categories = [
-  {
-    title: "OLOX Media",
-    description: "اشتراكات الأفلام والمسلسلات والأنمي.",
-    icon: Tv,
-    targetId: "#products-media",
-    gradient: "bg-gradient-to-br from-red-500 to-pink-600",
-  },
-  {
-    title: "OLOX Play",
-    description: "شحن الألعاب والباقات وخدمات الغيمرز.",
-    icon: Gamepad2,
-    targetId: "#products-play",
-    gradient: "bg-gradient-to-br from-green-500 to-emerald-600",
-  },
-  {
-    title: "OLOX Music",
-    description: "اشتراكات المنصات الموسيقية العالمية.",
-    icon: Music,
-    targetId: "#products-music",
-    gradient: "bg-gradient-to-br from-purple-500 to-violet-600",
-  },
-  {
-    title: "OLOX Tech",
-    description: "برامج التصميم والمونتاج والذكاء الاصطناعي.",
-    icon: Cpu,
-    targetId: "#products-tech",
-    gradient: "bg-gradient-to-br from-blue-500 to-cyan-600",
-  },
-  {
-    id: "custom",
-    title: "منتج مخصص",
-    description: "اطلب أي اشتراك أو خدمة غير موجودة في المتجر وسنتكلف بالبحث عنها.",
-    icon: Globe,
-    // نخلي targetId ديال الفورم باش حتى إلا معطيناش onClick
-    // الكارت مازال يقدر يهبط للفورم
-    targetId: "#order-form",
-    gradient: "bg-gradient-to-br from-yellow-400 to-amber-500",
-  },
-];
+interface CategoryCardProps {
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  targetId: string;
+  gradient: string;
+}
 
-export default function CategoriesSection() {
+export default function CategoryCard({ title, description, icon: Icon, targetId, gradient }: CategoryCardProps) {
+  const scrollToSection = () => {
+    const element = document.querySelector(targetId);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
-    <section id="categories" className="py-20 relative">
-      <div className="container mx-auto px-4">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
-          <span className="bg-gradient-to-l from-[hsl(var(--neon-purple))] to-[hsl(var(--neon-blue))] bg-clip-text text-transparent">
-            فئات المنتجات
-          </span>
-        </h2>
-        <p className="text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
-          اختر الفئة التي تناسبك واكتشف أفضل العروض والاشتراكات
-        </p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {categories.map((category) => (
-            <CategoryCard
-              key={category.title}
-              {...category}
-              // ✅ غير "منتج مخصص" لي نعطيه onClick خاص
-              onClick={
-                category.title === "منتج مخصص"
-                  ? () => {
-                      document
-                        .getElementById("order-form")
-                        ?.scrollIntoView({ behavior: "smooth" });
-                    }
-                  : undefined
-              }
-            />
-          ))}
+    <Card
+      onClick={scrollToSection}
+      className="cursor-pointer group relative overflow-visible border-[hsl(var(--neon-purple)/0.5)] bg-card/50 backdrop-blur-sm transition-all duration-300 hover:border-[hsl(var(--neon-purple))] hover:shadow-[0_0_30px_hsl(var(--neon-purple)/0.3)]"
+      data-testid={`card-category-${targetId.replace("#", "")}`}
+    >
+      <CardContent className="p-6 flex flex-col items-center text-center gap-4">
+        <div className={`p-4 rounded-full ${gradient} shadow-[0_0_20px_hsl(var(--neon-purple)/0.4)]`}>
+          <Icon className="h-8 w-8 text-white" />
         </div>
-      </div>
-    </section>
+        <h3 className="text-xl font-bold text-foreground">{title}</h3>
+        <p className="text-muted-foreground text-sm">{description}</p>
+      </CardContent>
+    </Card>
   );
 }
