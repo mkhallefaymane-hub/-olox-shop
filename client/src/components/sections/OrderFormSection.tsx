@@ -118,7 +118,7 @@ export default function OrderFormSection({ selectedProductId, selectedProductNam
 
   if (isSuccess) {
     return (
-      <section id="order" className="py-20 relative">
+      <section id="order-form" className="py-20 relative">
         <div className="container mx-auto px-4 max-w-2xl">
           <Card className="border-[hsl(var(--neon-purple)/0.5)] bg-card/80 backdrop-blur-sm shadow-[0_0_40px_hsl(var(--neon-purple)/0.2)]">
             <CardContent className="p-8 text-center">
@@ -151,7 +151,7 @@ export default function OrderFormSection({ selectedProductId, selectedProductNam
   }
 
   return (
-    <section id="order" className="py-20 relative">
+    <section id="order-from" className="py-20 relative">
       <div className="container mx-auto px-4 max-w-2xl">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
           <span className="bg-gradient-to-l from-[hsl(var(--neon-purple))] to-[hsl(var(--neon-blue))] bg-clip-text text-transparent">
